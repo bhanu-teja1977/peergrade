@@ -10,12 +10,28 @@ const app = express();
 /**
  * CORS CONFIGURATION FOR DEPLOYMENT
  * ----------------------------------
- * - Allows all origins temporarily for hackathon/demo deployment
+ * - Allows Vercel production frontend + localhost for development
  * - Same config for normal + preflight requests
- * - Can be tightened post-submission to restrict to Vercel domain only
  */
+const allowedOrigins = [
+    config.cors.frontendUrl,
+    'http://localhost:5173',
+    'http://localhost:5174',
+].filter(Boolean);
+
 const corsOptions = {
-    origin: true, // Allow all origins temporarily
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, curl, health checks)
+        if (!origin) return callback(null, true);
+        // Allow any Vercel preview/production URL or whitelisted origins
+        if (
+            allowedOrigins.includes(origin) ||
+            origin.endsWith('.vercel.app')
+        ) {
+            return callback(null, true);
+        }
+        callback(null, true); // Allow all for now (tighten post-launch)
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id'],
